@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Magnifier", "Magnifier\Magnifier.vcxproj", "{0A6605EC-89D2-43D4-800B-0E0715304FC8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OSGEDL", "OSGEDL\OSGEDL.vcxproj", "{0A975979-2D8B-4812-9FFD-0142D115D682}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OSGSSAO", "OSGSSAO\OSGSSAO.vcxproj", "{02BAC700-2812-4315-9F8C-06918DC95063}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A6605EC-89D2-43D4-800B-0E0715304FC8}.Debug|Win32.ActiveCfg = Debug|x64
+		{0A6605EC-89D2-43D4-800B-0E0715304FC8}.Debug|x64.ActiveCfg = Debug|x64
+		{0A6605EC-89D2-43D4-800B-0E0715304FC8}.Debug|x64.Build.0 = Debug|x64
+		{0A6605EC-89D2-43D4-800B-0E0715304FC8}.Release|Win32.ActiveCfg = Release|x64
+		{0A6605EC-89D2-43D4-800B-0E0715304FC8}.Release|x64.ActiveCfg = Release|x64
+		{0A6605EC-89D2-43D4-800B-0E0715304FC8}.Release|x64.Build.0 = Release|x64
+		{0A975979-2D8B-4812-9FFD-0142D115D682}.Debug|Win32.ActiveCfg = Debug|x64
+		{0A975979-2D8B-4812-9FFD-0142D115D682}.Debug|x64.ActiveCfg = Debug|x64
+		{0A975979-2D8B-4812-9FFD-0142D115D682}.Debug|x64.Build.0 = Debug|x64
+		{0A975979-2D8B-4812-9FFD-0142D115D682}.Release|Win32.ActiveCfg = Release|x64
+		{0A975979-2D8B-4812-9FFD-0142D115D682}.Release|x64.ActiveCfg = Release|x64
+		{0A975979-2D8B-4812-9FFD-0142D115D682}.Release|x64.Build.0 = Release|x64
+		{02BAC700-2812-4315-9F8C-06918DC95063}.Debug|Win32.ActiveCfg = Debug|x64
+		{02BAC700-2812-4315-9F8C-06918DC95063}.Debug|x64.ActiveCfg = Debug|x64
+		{02BAC700-2812-4315-9F8C-06918DC95063}.Debug|x64.Build.0 = Debug|x64
+		{02BAC700-2812-4315-9F8C-06918DC95063}.Release|Win32.ActiveCfg = Release|x64
+		{02BAC700-2812-4315-9F8C-06918DC95063}.Release|x64.ActiveCfg = Release|x64
+		{02BAC700-2812-4315-9F8C-06918DC95063}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
