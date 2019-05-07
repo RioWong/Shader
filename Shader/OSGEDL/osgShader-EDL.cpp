@@ -313,26 +313,28 @@ int main()
     programFirst->addShader(new osg::Shader(osg::Shader::FRAGMENT, edlshaderFrag));
     stateset->setAttributeAndModes(programFirst, osg::StateAttribute::ON);
 
-    //osg::Vec2* m_neighbours = new osg::Vec2;
-    osg::ref_ptr<osg::Vec2Array> m_neighbours = new osg::Vec2Array;
-    for (unsigned c = 0; c < 8;c++)
-    {
-        //m_neighbours[c] = osg::Vec2(static_cast<float>(cos(static_cast<double>(c)* M_PI / 4)), static_cast<float>(sin(static_cast<double>(c)* M_PI / 4)));
-        m_neighbours->push_back(osg::Vec2(static_cast<float>(cos(static_cast<double>(c) * M_PI / 4)), static_cast<float>(sin(static_cast<double>(c) * M_PI /4 ))) );
-    }
+
     stateset->addUniform(new osg::Uniform("s1_color", 1));
     stateset->addUniform(new osg::Uniform("s2_depth", 0));
     stateset->addUniform(new osg::Uniform("Sx", 600/*static_cast<float>(m_screenWidth)*/));
     stateset->addUniform(new osg::Uniform("Sy", 600/*static_cast<float>(m_screenHeight)*/));
-    stateset->addUniform(new osg::Uniform("Zoom", 3.0/*lightMod*/));
+    stateset->addUniform(new osg::Uniform("Zoom", 1.0/*lightMod*/));
     stateset->addUniform(new osg::Uniform("PerspectiveMode", 1.0/*perspectiveMode*/));
     stateset->addUniform(new osg::Uniform("Pix_scale", 0.08/*static_cast<float>(scale)*/));
     stateset->addUniform(new osg::Uniform("Exp_scale", 2.0/*m_expScale*/));
     stateset->addUniform(new osg::Uniform("Zm", 1.0/*static_cast<float>(parameters.zNear)*/));
     stateset->addUniform(new osg::Uniform("ZM", 100.0/*static_cast<float>(parameters.zFar)*/));
-    stateset->addUniform(new osg::Uniform("Light_dir", osg::Vec3d(1.0,1.0,1.0)/*reinterpret_cast<const GLfloat*>(m_lightDir), 1, 3*/));
-    stateset->addUniform(new osg::Uniform("Neigh_pos_2D", m_neighbours.get() /*reinterpret_cast<const GLfloat*>(m_neighbours), 8, 2*/));
+    stateset->addUniform(new osg::Uniform("Light_dir", osg::Vec3d(0.0,0.0,1.0)/*reinterpret_cast<const GLfloat*>(m_lightDir), 1, 3*/));
 
+    //http://forum.openscenegraph.org/viewtopic.php?t=11947 -- Reference 
+    //http://forum.openscenegraph.org/viewtopic.php?t=7996
+    osg::Uniform* arrayNeighbours = new osg::Uniform(osg::Uniform::Type::DOUBLE_VEC2, "Neigh_pos_2D", 8);
+    for (unsigned c = 0; c < 8; c++)
+    {
+        arrayNeighbours->setElement(c, osg::Vec2d(static_cast<float>(cos(static_cast<double>(c)* M_PI / 4)), static_cast<float>(sin(static_cast<double>(c)* M_PI / 4))));
+    }
+
+    stateset->addUniform(arrayNeighbours);
     passFirst->addChild(quadFirst);
 
     //---------------------------------------------------------------------------
