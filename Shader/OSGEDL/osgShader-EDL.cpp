@@ -169,65 +169,15 @@ static const char* edlmixFrag = {
     "}                                                                    \n"
 };
 
-static const char* vertShader = {
-    "varying vec3 lightVec;                              \n"
-    "varying vec3 viewVec;                               \n"
-    "varying vec2 texCoord;                              \n"
-    "attribute vec3 Tangent;                             \n"
-    "void main(void)                                     \n"
-    "{                                                   \n"
-    "	gl_Position = ftransform();                        \n"
-    "	texCoord = gl_MultiTexCoord0.xy;                    \n"
-    "                                                    \n"
-    "	vec3 n = normalize(gl_NormalMatrix*gl_Normal);     \n"
-    "	vec3 t = normalize(gl_NormalMatrix * Tangent);     \n"
-    "	vec3 b = cross(n, t);                              \n"
-    "                                                    \n"
-    "	vec3 v;                                            \n"
-    "	vec3 vVertex = vec3(gl_ModelViewMatrix*gl_Vertex); \n"
-    "	vec3 lVec = gl_LightSource[0].position.xyz-vVertex;\n"
-    "	                                                   \n"
-    "	v.x = dot(lVec, t);                                \n"
-    "	v.y = dot(lVec, b);                                \n"
-    "	v.z = dot(lVec, n);                                \n"
-    "	lightVec = v;                                      \n"
-    "                                                    \n"
-    "	vec3 vVec= -vVertex;                               \n"
-    "	v.x = dot(vVec,t);                                 \n"
-    "	v.y = dot(-vVec, b);                               \n"
-    "	v.z = dot(vVec, n);                                \n"
-    "	viewVec = v;                                       \n"
-    "}                                                   \n"
-};
+osg::Vec3 setLightDir(float theta_rad, float phi_rad)
+{
+    osg::Vec3 m_lightDir;
+    m_lightDir[0] = std::sin(phi_rad)*std::cos(theta_rad);
+    m_lightDir[1] = std::cos(phi_rad);
+    m_lightDir[2] = std::sin(phi_rad)*std::sin(theta_rad);
+    return m_lightDir;
+}
 
-static const char* fragShader = {
-    "varying vec3 lightVec;                                                                              \n"
-    "varying vec3 viewVec;                                                                               \n"
-    "varying vec2 texCoord;                                                                              \n"
-    "uniform sampler2D colorMap;                                                                         \n"
-    "uniform sampler2D normalMap;                                                                        \n"
-    "uniform sampler2D heightMap;                                                                        \n"
-    "void main(void)                                                                                     \n"
-    "{                                                                                                   \n"
-    "	vec3 lVec = normalize(lightVec);                                                                   \n"
-    "	vec3 vVec = normalize(viewVec);                                                                    \n"
-    "                                                                                                    \n"
-    "	float height = texture2D(heightMap, texCoord).x;                                                   \n"
-    "	vec2 newTexCoord = texCoord + ((height*0.04-0.02)*vVec.xy);                                        \n"
-    "                                                                                                    \n"
-    "	vec4 base = texture2D(colorMap, newTexCoord);                                                      \n"
-    "	vec3 bump = normalize(texture2D(normalMap, newTexCoord).xyz*2.0-1.0);                              \n"
-    "	bump = normalize(bump);                                                                            \n"
-    "                                                                                                    \n"
-    "	float diffuse = max(dot(lVec, bump), 0.0);                                                         \n"
-    "	float specular = pow(clamp(dot(reflect(-vVec, bump), lVec), 0.0, 1.0), gl_FrontMaterial.shininess);\n"
-    "                                                                                                    \n"
-    "	vec4 vAmbient = gl_LightSource[0].ambient*gl_FrontMaterial.ambient;                                \n"
-    "	vec4 vDiffuse = gl_LightSource[0].diffuse*gl_FrontMaterial.diffuse*diffuse;                        \n"
-    "	vec4 vSpecular = gl_LightSource[0].specular*gl_FrontMaterial.specular*specular;                    \n"
-    "	gl_FragColor = vAmbient*base + (vDiffuse*base+vSpecular);                                          \n"
-    "}                                                                                                   \n"
-};
 
 
 osg::Camera* cameraFirst = new osg::Camera;
@@ -351,7 +301,8 @@ int main()
     cameraFirst2->setViewMatrixAsLookAt(osg::Vec3(0.0, -245.0, 0.0), osg::Vec3(0.0, -144.72, 0.0), osg::Vec3(0.0, 0.0, 1.0));
     cameraFirst2->setViewport(0, 0, 512, 512);//0, 0, 512, 512
     cameraFirst2->setRenderTargetImplementation(rm);
-    cameraFirst2->attach(osg::Camera::DEPTH_BUFFER/*COLOR_BUFFER*/, textureFirst2, 0, 0, false, 4, 0);
+    //cameraFirst2->attach(osg::Camera::DEPTH_BUFFER, textureFirst2);
+    cameraFirst2->attach(osg::Camera::DEPTH_BUFFER, textureFirst2, 0, 0, false, 4, 0);
     cameraFirst2->addChild(ceep);
     passFirst->addChild(cameraFirst2);
 
@@ -363,9 +314,10 @@ int main()
         std::cout << "ERROR" << std::endl;
     }
     quadFirst->addChild(screenquad);
+    //quadFirst->addChild(ceep);
     osg::StateSet* stateset = quadFirst->getOrCreateStateSet();
     stateset->setTextureAttributeAndModes(1, textureFirst1, osg::StateAttribute::ON); //纹理1 - COLOR_BUFFER
-    stateset->setTextureAttributeAndModes(2, textureFirst2, osg::StateAttribute::ON); //纹理2 - DEPTH_BUFFER
+    stateset->setTextureAttributeAndModes(0, textureFirst2, osg::StateAttribute::ON); //纹理2 - DEPTH_BUFFER
 
     osg::Program* programFirst = new osg::Program;
     programFirst->addShader(new osg::Shader(osg::Shader::VERTEX, edlshaderVert));//第一个shader
@@ -393,16 +345,19 @@ int main()
      */
 
     stateset->addUniform(new osg::Uniform("s1_color", 1));
-    stateset->addUniform(new osg::Uniform("s2_depth", 2));
+    stateset->addUniform(new osg::Uniform("s2_depth", 0));
     stateset->addUniform(new osg::Uniform("Pix_scale", 0.08/*static_cast<float>(scale)*/));
     stateset->addUniform(new osg::Uniform("Exp_scale", 1.2/*m_expScale*/));
-    stateset->addUniform(new osg::Uniform("Zm", 1.0/*static_cast<float>(parameters.zNear)*/));
-    stateset->addUniform(new osg::Uniform("ZM", 100.0/*static_cast<float>(parameters.zFar)*/));
+    stateset->addUniform(new osg::Uniform("Zm", 0.10/*static_cast<float>(parameters.zNear)*/));
+    stateset->addUniform(new osg::Uniform("ZM", 1000.0/*static_cast<float>(parameters.zFar)*/));
     stateset->addUniform(new osg::Uniform("Sx", 512/*static_cast<float>(m_screenWidth)*/));
     stateset->addUniform(new osg::Uniform("Sy", 512/*static_cast<float>(m_screenHeight)*/));
-    stateset->addUniform(new osg::Uniform("Zoom", 1.0/*lightMod*/));
-    stateset->addUniform(new osg::Uniform("PerspectiveMode", 1.0/*perspectiveMode*/));
-    stateset->addUniform(new osg::Uniform("Light_dir", osg::Vec3(0.0,0.0,1.0)/*reinterpret_cast<const GLfloat*>(m_lightDir), 1, 3*/));
+    stateset->addUniform(new osg::Uniform("Zoom", 3.0/*lightMod*/));
+    stateset->addUniform(new osg::Uniform("PerspectiveMode", 1/*perspectiveMode*/));
+
+    osg::Vec3 lightDir = setLightDir(static_cast<float>(M_PI / 2.0), static_cast<float>(M_PI / 2.0));
+
+    stateset->addUniform(new osg::Uniform("Light_dir", lightDir/*reinterpret_cast<const GLfloat*>(m_lightDir), 1, 3*/));
 
     //http://forum.openscenegraph.org/viewtopic.php?t=11947 -- Reference 
     //http://forum.openscenegraph.org/viewtopic.php?t=7996
@@ -526,7 +481,7 @@ int main()
     //forthPass->addChild(quadForth);
 
 
-    viewer->setSceneData(passFirst/*secondPass*/);
+    viewer->setSceneData(/*ceep*/passFirst);
     viewer->addEventHandler(new CameraEvent);
     viewer->addEventHandler(new ChangeWindow);
     viewer->run();
