@@ -5,10 +5,10 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>E:\OSG\OpenSceneGraph-3.4.0\build\install\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\OSG\OpenSceneGraph-3.4.0\build\install\include;D:\OpenGLFiles\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>E:\OSG\OpenSceneGraph-3.4.0\build\install\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\OSG\OpenSceneGraph-3.4.0\build\install\lib;D:\OpenGLFiles\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenThreadsd.lib;osgAnimationd.lib;osgd.lib;osgDBd.lib;osgFXd.lib;osgGAd.lib;osgManipulatord.lib;osgParticled.lib;osgPresentationd.lib;osgQtd.lib;osgShadowd.lib;osgSimd.lib;osgTerraind.lib;osgTextd.lib;osgUId.lib;osgUtild.lib;osgViewerd.lib;osgVolumed.lib;osgWidgetd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

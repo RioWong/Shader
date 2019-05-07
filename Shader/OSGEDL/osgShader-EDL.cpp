@@ -7,6 +7,8 @@
 #include <osg/Program>
 #include <iostream>
 
+#define M_PI 3.14159265358979323846  /* pi */
+
 //通道一
 static const char* edlshaderVert = {
     "void main()                           \n"
@@ -246,7 +248,7 @@ public:
 int main()
 {
     osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
-    osg::Node* ceep = osgDB::readNodeFile("../ceep.ive");
+    osg::Node* ceep = osgDB::readNodeFile("cow.osg");//"../ceep.ive"
 
     //--------------------------------------------------------------------------
     //通道一
@@ -311,64 +313,64 @@ int main()
     programFirst->addShader(new osg::Shader(osg::Shader::FRAGMENT, edlshaderFrag));
     stateset->setAttributeAndModes(programFirst, osg::StateAttribute::ON);
 
+    //osg::Vec2* m_neighbours = new osg::Vec2;
+    osg::ref_ptr<osg::Vec2Array> m_neighbours = new osg::Vec2Array;
+    for (unsigned c = 0; c < 8;c++)
+    {
+        //m_neighbours[c] = osg::Vec2(static_cast<float>(cos(static_cast<double>(c)* M_PI / 4)), static_cast<float>(sin(static_cast<double>(c)* M_PI / 4)));
+        m_neighbours->push_back(osg::Vec2(static_cast<float>(cos(static_cast<double>(c) * M_PI / 4)), static_cast<float>(sin(static_cast<double>(c) * M_PI /4 ))) );
+    }
     stateset->addUniform(new osg::Uniform("s1_color", 1));
     stateset->addUniform(new osg::Uniform("s2_depth", 0));
-    //stateset->addUniform(new osg::Uniform("Sx", static_cast<float>(m_screenWidth)));
-    //stateset->addUniform(new osg::Uniform("Sy", static_cast<float>(m_screenHeight)));
-    //float lightMod = perspectiveMode ? 3.0f : static_cast<float>(std::sqrt(2.0 * std::max(parameters.zoom, 0.7))); //1.41
-    /*
-            //ccEDLFilter.cpp
-            m_EDLShader->setUniformValue("s1_color", 1);
-            m_EDLShader->setUniformValue("s2_depth", 0);
-            m_EDLShader->setUniformValue("Sx", static_cast<float>(m_screenWidth));
-            m_EDLShader->setUniformValue("Sy", static_cast<float>(m_screenHeight));
-            m_EDLShader->setUniformValue("Zoom", lightMod);
-            m_EDLShader->setUniformValue("PerspectiveMode", perspectiveMode);
-            m_EDLShader->setUniformValue("Pix_scale", static_cast<float>(scale));
-            m_EDLShader->setUniformValue("Exp_scale", m_expScale);
-            m_EDLShader->setUniformValue("Zm", static_cast<float>(parameters.zNear));
-            m_EDLShader->setUniformValue("ZM", static_cast<float>(parameters.zFar));
-            m_EDLShader->setUniformValueArray("Light_dir", reinterpret_cast<const GLfloat*>(m_lightDir), 1, 3);
-            m_EDLShader->setUniformValueArray("Neigh_pos_2D", reinterpret_cast<const GLfloat*>(m_neighbours), 8, 2);
-    */
+    stateset->addUniform(new osg::Uniform("Sx", 600/*static_cast<float>(m_screenWidth)*/));
+    stateset->addUniform(new osg::Uniform("Sy", 600/*static_cast<float>(m_screenHeight)*/));
+    stateset->addUniform(new osg::Uniform("Zoom", 3.0/*lightMod*/));
+    stateset->addUniform(new osg::Uniform("PerspectiveMode", 1.0/*perspectiveMode*/));
+    stateset->addUniform(new osg::Uniform("Pix_scale", 0.08/*static_cast<float>(scale)*/));
+    stateset->addUniform(new osg::Uniform("Exp_scale", 2.0/*m_expScale*/));
+    stateset->addUniform(new osg::Uniform("Zm", 1.0/*static_cast<float>(parameters.zNear)*/));
+    stateset->addUniform(new osg::Uniform("ZM", 100.0/*static_cast<float>(parameters.zFar)*/));
+    stateset->addUniform(new osg::Uniform("Light_dir", osg::Vec3d(1.0,1.0,1.0)/*reinterpret_cast<const GLfloat*>(m_lightDir), 1, 3*/));
+    stateset->addUniform(new osg::Uniform("Neigh_pos_2D", m_neighbours.get() /*reinterpret_cast<const GLfloat*>(m_neighbours), 8, 2*/));
+
     passFirst->addChild(quadFirst);
 
     //---------------------------------------------------------------------------
-    //通道二
-    osg::Group* secondPass = new osg::Group;
-    //RTT
-    osg::Texture2D* texturesecond = new osg::Texture2D;
-    texturesecond->setTextureSize(128, 128);
-    texturesecond->setInternalFormat(GL_RGBA);
-    texturesecond->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
-    texturesecond->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-    texturesecond->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    texturesecond->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    texturesecond->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    ////通道二
+    //osg::Group* secondPass = new osg::Group;
+    ////RTT
+    //osg::Texture2D* texturesecond = new osg::Texture2D;
+    //texturesecond->setTextureSize(128, 128);
+    //texturesecond->setInternalFormat(GL_RGBA);
+    //texturesecond->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
+    //texturesecond->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
+    //texturesecond->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    //texturesecond->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+    //texturesecond->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
 
-    osg::Camera* camerasecond = new osg::Camera;
-    camerasecond->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
-    camerasecond->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    camerasecond->setViewport(0, 0, 128, 128);
-    camerasecond->setRenderTargetImplementation(rm);
-    camerasecond->attach(osg::Camera::COLOR_BUFFER, texturesecond);
-    camerasecond->addChild(passFirst);
-    secondPass->addChild(camerasecond);
+    //osg::Camera* camerasecond = new osg::Camera;
+    //camerasecond->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
+    //camerasecond->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //camerasecond->setViewport(0, 0, 128, 128);
+    //camerasecond->setRenderTargetImplementation(rm);
+    //camerasecond->attach(osg::Camera::COLOR_BUFFER, texturesecond);
+    //camerasecond->addChild(passFirst);
+    //secondPass->addChild(camerasecond);
 
-    osg::Group* quadsecond = new osg::Group;
-    quadsecond->addChild(screenquad);
-    stateset = quadsecond->getOrCreateStateSet();
-    stateset->setTextureAttributeAndModes(3, texturesecond, osg::StateAttribute::ON);
+    //osg::Group* quadsecond = new osg::Group;
+    //quadsecond->addChild(screenquad);
+    //stateset = quadsecond->getOrCreateStateSet();
+    //stateset->setTextureAttributeAndModes(3, texturesecond, osg::StateAttribute::ON);
 
-    osg::Program* programsecond = new osg::Program;
-    programsecond->addShader(new osg::Shader(osg::Shader::VERTEX, edlmixVert));//第一个shader
-    programsecond->addShader(new osg::Shader(osg::Shader::FRAGMENT, edlmixFrag));
-    stateset->setAttributeAndModes(programsecond, osg::StateAttribute::ON);
+    //osg::Program* programsecond = new osg::Program;
+    //programsecond->addShader(new osg::Shader(osg::Shader::VERTEX, edlmixVert));//第一个shader
+    //programsecond->addShader(new osg::Shader(osg::Shader::FRAGMENT, edlmixFrag));
+    //stateset->setAttributeAndModes(programsecond, osg::StateAttribute::ON);
 
-    stateset->addUniform(new osg::Uniform("RT", 3));
-    stateset->addUniform(new osg::Uniform("sampleDist0", 0.0198f));
-    secondPass->addChild(quadsecond);
-    //-----------------------------------------------------------------
+    //stateset->addUniform(new osg::Uniform("RT", 3));
+    //stateset->addUniform(new osg::Uniform("sampleDist0", 0.0198f));
+    //secondPass->addChild(quadsecond);
+    
     //---------------------------------------------------------------------------
     ////通道三
     //osg::Group* thirdPass = new osg::Group;
@@ -443,7 +445,7 @@ int main()
     //forthPass->addChild(quadForth);
 
 
-    viewer->setSceneData(secondPass);
+    viewer->setSceneData(passFirst/*secondPass*/);
     viewer->addEventHandler(new CameraEvent);
     viewer->addEventHandler(new ChangeWindow);
     viewer->run();
