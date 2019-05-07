@@ -54,8 +54,8 @@ const static GLfloat green_color[] = { 0.0f, 1.0f, 0.0f, 0.5f };
 const static GLfloat blue_color[] = { 0.0f, 0.0f, 1.0f, 0.5f };
 
 //shader
-float g_radisX = 0.02f;
-float g_radisXX = 0.06f;
+float g_radisX = 0.12f;//0.2
+float g_radisXX = 0.36f;//0.6
 
 
 void setMaterial(const GLfloat mat_diffuse[4], GLfloat mat_shininess)
@@ -91,23 +91,23 @@ public:
         //glTranslatef(-2.5f,0.0f,0.0f);
         //glutSolidTeapot(0.3f);//-----------------------------------
         //-------------------------------------------------------------------------
-        osg::ref_ptr<osg::TessellationHints> hits = new osg::TessellationHints;
+        //osg::ref_ptr<osg::TessellationHints> hits = new osg::TessellationHints;
         //值越小精度也就越小
         //hits->setDetailRatio(10.0f);
 
-        osg::ref_ptr<osg::Cylinder> cy = new osg::Cylinder;
-        //直接用几何对象初始化实例
-        osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(cy);
-        cy->setCenter(osg::Vec3(50.0, 0.0, 0.0));
-        cy->setHeight(30);
-        cy->setRadius(30);
+        //osg::ref_ptr<osg::Cylinder> cy = new osg::Cylinder;
+        ////直接用几何对象初始化实例
+        //osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(cy);
+        //cy->setCenter(osg::Vec3(50.0, 0.0, 0.0));
+        //cy->setHeight(30);
+        //cy->setRadius(30);
 
         //sd->setTessellationHints(hits);
         //：https://blog.csdn.net/wb175208/article/details/87934377 
 
         osg::ref_ptr<osg::Box> box = new osg::Box;
         box->setCenter(osg::Vec3(-50.0, 0.0, 0.0));
-        box->setHalfLengths(osg::Vec3(30.0, 30.0, 30.0));
+        box->setHalfLengths(osg::Vec3(60.0, 60, 60.0));
         osg::ref_ptr<osg::ShapeDrawable> sd2 = new osg::ShapeDrawable(box.get());
 
         //osg::ref_ptr<osg::Geode> geode = new osg::Geode;
@@ -118,6 +118,29 @@ public:
      //protected:
      //	virtual ~Teapot();
 };
+
+//Create Box by OSG
+osg::ShapeDrawable* createBox()
+{
+    osg::ref_ptr<osg::Box> box = new osg::Box;
+    box->setCenter(osg::Vec3(-50.0, 0.0, 0.0));
+    box->setHalfLengths(osg::Vec3(60.0, 60, 60.0));
+    osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(box.get());
+    return sd.get();
+}
+
+//Create Cylinder by OSG
+osg::ShapeDrawable* createCylinder()
+{
+    osg::ref_ptr<osg::Cylinder> cy = new osg::Cylinder;
+    cy->setCenter(osg::Vec3(50.0, 0.0, 0.0));
+    cy->setHeight(30);
+    cy->setRadius(30);
+    //直接用几何对象初始化实例
+    //osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(cy);
+    osg::ShapeDrawable* sd = new osg::ShapeDrawable(cy);
+    return sd;
+}
 
 osg::Geode* createTeapot()
 {
@@ -140,7 +163,7 @@ osg::Geode* createTeapot()
     blendTexEnv->setMode(osg::TexEnv::REPLACE);
     blendStateSet->setTextureAttributeAndModes(0, KLN89FaceTexture, osg::StateAttribute::ON);
     blendStateSet->setTextureAttribute(0, blendTexEnv);
-    geode->addDrawable(new Teapot());
+    geode->addDrawable(createCylinder() /*createBox()*/ /*new Teapot()*/);
     //geode->setStateSet(blendStateSet);
     return geode;
 }
@@ -206,7 +229,7 @@ osg::Camera* createRttCamera(int texWidth, int texHeight)
     rttCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     rttCamera->setViewport(0, 0, 256, 256);
     rttCamera->setRenderOrder(osg::Camera::PRE_RENDER);
-    rttCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+    rttCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);//FBO
     rttCamera->setProjectionMatrixAsPerspective(times, 1.0f, 1.0f, 100.0f);
 
     osg::Vec3d upDirect(0.0f, 0.0f, 1.0f);
@@ -263,6 +286,7 @@ private:
     float temp_x;
     float temp_y;
 };
+
 class CSpaceShipCallback : public osg::NodeCallback
 {
 public:
@@ -373,8 +397,8 @@ int main()
     pMTea1->setUpdateCallback(new CTeapotCallback);
     pMTea1->addChild(TeaTexture);
     rttCamera->addChild(pMTea1);
-    osg::Texture* rttTexture = createRttTexture(texWidth, texHeight);
-    rttCamera->attach(osg::Camera::COLOR_BUFFER, rttTexture);
+    osg::Texture* rttTexture = createRttTexture(texWidth, texHeight);       //创建RTT纹理
+    rttCamera->attach(osg::Camera::COLOR_BUFFER, rttTexture);               
     quad->getOrCreateStateSet()->setTextureAttributeAndModes(0, rttTexture);
 
     //纹理
