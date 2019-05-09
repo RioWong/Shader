@@ -1,0 +1,379 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ * 
+ * Author: Roland Smeenk
+ */
+
+#ifndef OSG_SHADERMODE
+#define OSG_SHADERMODE 1
+
+#include <osg/Object>
+#include <osg/Uniform>
+
+#include <sstream>
+#include <string>
+#include <algorithm>
+
+
+namespace osg {
+
+/** META_ShaderMode macro define the standard clone, isSameKindAs, className
+  * and accept methods.  Use when subclassing from ShaderMode to make it
+  * more convenient to define the required pure virtual methods.*/
+#define META_ShaderMode(library, name) \
+        virtual osg::Object* cloneType() const { return new name (); } \
+        virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new name (*this,copyop); } \
+        virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const name *>(obj)!=NULL; } \
+        virtual const char* className() const { return #name; } \
+        virtual const char* libraryName() const { return #library; } \
+        
+/** ostringstream wrapper class for adding support for indenting and line numbering at end of line.*/
+class SourceOutput : public std::ostringstream
+{
+    public:
+
+        SourceOutput() :
+			_indent(0),
+			_indentStep(4)
+        {}
+        
+        virtual ~SourceOutput() {}
+
+		/// Perform indentation based on current _indent level
+        SourceOutput& indent() 
+        {
+            for(int i=0;i<_indent;++i) *this<<' ';
+			return *this;
+        }
+        
+		/// Set number of spaces used for indentation
+        inline void setIndentStep(int step) { _indentStep = step; }
+        /// Get number of spaces used for indentation
+        inline int getIndentStep() const { return _indentStep; }
+
+		/// Set indentation level
+        inline void setIndent(int indent)  { _indent = indent; }
+        /// Get indentation level
+        inline int getIndent() const { return _indent; }
+
+		/// Add one indentation level
+        void moveIn() { _indent += _indentStep; }
+        /// Remove one indentation level
+        void moveOut() 
+        {    
+			_indent -= _indentStep;
+			if (_indent<0) _indent=0;
+		}
+		
+		class EndOfLineWithLineCount
+		{
+		public:
+			EndOfLineWithLineCount()
+			{	lineCount = 0; lastPos = 0; }
+			
+			friend std::ostream& operator << (std::ostream& output, const EndOfLineWithLineCount)
+			{
+				int fill = (lastPos + 80) - output.tellp();
+				for(int i= 0; i < fill; ++i) output << ' ';
+				output << " // " << ++lineCount << std::endl;
+				lastPos = output.tellp();
+				return output;
+			}
+			static int  lineCount;
+			static long lastPos;
+        };
+        
+        EndOfLineWithLineCount& eol() { return _eol; }
+
+    protected:
+        int _indent;
+        int _indentStep;
+        EndOfLineWithLineCount _eol;
+};
+
+class OSG_EXPORT ShaderMode : public Object
+{
+    public :
+        
+		enum SourceInjectLocation {
+			VERTEXINIT			= 0x0001, 
+			VERTEXFUNCTION		= 0x0002,
+			VERTEXMAINVARS		= 0x0004,
+			VERTEXMAIN			= 0x0008, 
+			GEOMETRYINIT		= 0x0010,
+			GEOMETRYFUNCTION	= 0x0020,
+			GEOMETRYMAINVARS	= 0x0040,
+			GEOMETRYMAIN		= 0x0080,
+			FRAGMENTINIT		= 0x0100,
+			FRAGMENTFUNCTION	= 0x0200,
+			FRAGMENTMAINVARS	= 0x0400,
+			FRAGMENTMAIN		= 0x0800,
+			EMPTY				= 0x0000
+		};    
+		
+        /** Values of ShaderMode::Type used to aid identification
+          * of different ShaderMode subclasses. Each subclass defines
+          * its own value in the virtual Type getType() method.  When 
+          * extending the osg's ShaderMode's simply define your
+          * own Type value which is unique, using the ShaderMode::Type
+          * enum as a guide of what values to use.  If your new subclass
+          * needs to override a standard ShaderMode then simply use 
+          * that type's value. */
+        enum Type
+        {
+			VISUALROOT,
+			EYENORMALROOT,
+			DEPTHROOT,
+			COLORMATRIX,
+			FOG,
+			TEXENV,
+			TEXTURE2D,
+			LIGHTING,			
+			LIGHT,
+			LIGHTMODEL,
+			MATERIAL,
+			TEXMAT,
+			TEXGEN,
+			CLIPPLANE,
+			BASE
+        };		      
+        
+		/// Custom constructor
+        ShaderMode(	unsigned int injectionMask=EMPTY,
+					bool switchable=true) :
+			_injectionMask(injectionMask),
+			_traversed(false),
+			_switchable(switchable)
+        {
+        }        
+    
+		/// Custom Constructor
+        ShaderMode(	const std::string& name, 
+					unsigned int injectionMask=EMPTY,
+					bool switchable=true) :
+			_injectionMask(injectionMask),
+			_traversed(false),
+			_switchable(switchable)
+        {
+			_name = name;
+			init();
+        }
+
+        /// Copy constructor
+        ShaderMode(const ShaderMode& shaderMode, const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			Object(shaderMode,copyop),
+            _injectionMask(shaderMode._injectionMask),
+            _inputs(shaderMode._inputs),
+            _outputs(shaderMode._outputs),
+            _traversed(shaderMode._traversed),
+            _switchable(shaderMode._switchable)
+        {
+        	for (size_t i=0; i < shaderMode._children.size(); i++)
+			{
+				addChild(shaderMode._children[i]);
+			}
+        }    
+        
+        /** Return the Type identifier of the ShaderMode's class type.*/
+        virtual Type getType() const = 0;
+	
+		/** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+		virtual int compare(const ShaderMode& rhs) const;
+        
+		bool operator <	 (const ShaderMode& rhs) const { return compare(rhs)<0; }
+		bool operator == (const ShaderMode& rhs) const { return compare(rhs)==0; }
+ 		bool operator != (const ShaderMode& rhs) const { return compare(rhs)!=0; } 		
+       
+		/** Indicates what parts of the final shader output this ShaderMode affects. **/
+		unsigned int getInjectionMask() 
+		{
+			return _injectionMask;
+		}		
+		
+		/** Get the underlying uniform for enabling or disabling this ShaderMode. **/
+		Uniform* getEnabledUniform() { return _enabledUniform.get(); }
+		
+		/** Get the underlying uniform for enabling or disabling this ShaderMode. **/
+		const osg::Uniform* getEnabledUniform() const { return _enabledUniform.get(); }
+		
+		/** ShaderMode enable method analog to OpenGL glEnable/glDisable, only valid if switchable **/
+		void enable(bool enable) const
+		{ 
+			if (_enabledUniform.valid())
+			{
+				_enabledUniform->set(enable);
+			}
+		}		
+     
+		struct Variable 
+		{
+			Variable(std::string type, std::string name, std::string default):
+                _type(type), _name(name), _default(default), _useDefault(false) {}
+                
+	
+			std::string	_type;		// Variable name
+			std::string	_name;		// Variable name
+			std::string _default;	// Default if no valid input found, default if not enabled
+			bool _useDefault;
+		};        
+        
+        typedef std::vector<Variable> VariableList;
+
+        /** Get the input variable list of this ShaderMode. */
+        inline VariableList& getInputVariables() { return _inputs; }        
+
+        /** Get the output variable list of this ShaderMode. */
+        inline VariableList& getOutputVariables() { return _outputs; }           
+        
+        void removeAllChildren() { _children.clear(); }
+
+        void addChild(ShaderMode* shaderMode) 
+        { 
+			if (std::find(_children.begin(), _children.end(), shaderMode) == _children.end())
+			{
+				_children.push_back(shaderMode); 
+			}
+        }
+        
+        bool getTraversed() { return _traversed; }
+        virtual void resetTraversed() { _traversed = false; }
+        
+        bool isSwitchable() { return _switchable; }
+
+		// Root = only inputs, no outputs
+        bool isRootNode() { return (!_inputs.empty() && _outputs.empty()); }
+       
+        /** Add shader source to given stream, but wrapped in enabled flag **/
+        void writeSource(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);		
+		
+		/** Write out shader mode graph **/
+		void writeShaderModeDebugInfo(SourceOutput& str) ;
+		
+    protected:
+        
+        /// Protected destructor to prevent direct deletion
+        virtual ~ShaderMode() {}   
+            
+		/// Method for concrete shader modes to implement
+		virtual void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0) = 0;
+		
+		void init()
+		{
+			if (_switchable)
+			{
+				_enabledUniform = new osg::Uniform(std::string(_name + "Enabled").c_str(), false);
+			}
+		}		
+		
+	private:
+		
+		/// Write dependencies
+		void writeChildren(SourceOutput& str, SourceInjectLocation location, unsigned int index=0)
+		{
+			for (size_t i=0; i < _children.size(); i++)
+			{
+				// Only let child write source if not already done
+				if (!_children[i]->getTraversed())
+				{
+					_children[i]->writeSource(str, location, index);
+				}
+			}
+		}
+    
+     protected:
+		/// Mask that describes which source code sections it wants to write to 
+		unsigned int	_injectionMask;
+		/// Flag to indicate that shader code was written to prevent multiple traversals
+		bool _traversed;
+		/// Can this mode be switched on or off with an enabled uniform?
+		bool _switchable;
+		/// Uniform to enable/disable this piece of shader functionality 
+		osg::ref_ptr<osg::Uniform> _enabledUniform;
+
+		// List of input variables that this shadermode needs
+		VariableList _inputs;
+		// List of output variables that this shadermode will provide
+		VariableList _outputs;
+		
+		// Shadermode dependencies resolved during shader generation
+		std::vector<osg::ref_ptr<ShaderMode>> _children;
+};
+
+/** 
+ * ShaderMode that can be instanced multiple times
+ */     
+class OSG_EXPORT MultiShaderMode : public ShaderMode
+{
+    public :
+		/// Custom Constructor
+        MultiShaderMode(	const std::string& name, 
+							int index,
+							unsigned int injectionMask=EMPTY,
+							bool switchable=true) :
+			ShaderMode(injectionMask, switchable),
+			_index(index)
+        {
+        	char tmp[256];
+			sprintf(tmp,"%s%d", name.c_str(), index);
+			_name = tmp;
+			init();
+        }        
+        
+        /// Copy constructor
+        MultiShaderMode(const MultiShaderMode& shaderMode, const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			ShaderMode(shaderMode,copyop),
+            _index(shaderMode._index)
+        {
+        }    
+        
+		/** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+		virtual int compare(const ShaderMode& rhs) const;
+        
+    protected:
+        
+        /// Protected destructor to prevent direct deletion
+        virtual ~MultiShaderMode() {}   
+    
+     protected:
+		int _index;
+};
+
+class ShaderModeIndexPair
+{
+public:
+
+	ShaderModeIndexPair(ShaderMode::Type shaderModeType, int index) :
+		_shaderModeType(shaderModeType),
+		_index(index)
+	{
+	}
+
+    inline bool operator < (const ShaderModeIndexPair& rhs) const
+	{
+		if (_shaderModeType != rhs._shaderModeType)
+			return _shaderModeType < rhs._shaderModeType;
+		return _index < rhs._index;	
+	}	
+	
+	friend inline std::ostream& operator << (std::ostream& output, const ShaderModeIndexPair& sm)
+	{
+		output << sm._shaderModeType << " "  << sm._index;
+		return output;
+	}	
+
+	ShaderMode::Type _shaderModeType;
+	int _index;
+};
+
+}
+
+#endif

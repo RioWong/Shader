@@ -1,0 +1,41 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ *
+ * Author: Roland Smeenk   
+*/
+
+#ifndef OSG_SHADERMODERESCALENORMAL
+#define OSG_SHADERMODERESCALENORMAL 1
+
+#include <osg/ShaderMode>
+
+namespace osg {
+
+/** 
+ * GLSL shader implementation of OpenGl 2D texture functionality.
+ */
+class OSG_EXPORT ShaderModeRescaleNormal : public ShaderMode
+{
+
+    public :
+        
+        ShaderModeRescaleNormal() :
+			ShaderMode("FFRescaleNormal", ShaderMode::VERTEXMAIN)
+		{ }
+
+        /** Add shader code fragments to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+};
+
+}
+
+#endif

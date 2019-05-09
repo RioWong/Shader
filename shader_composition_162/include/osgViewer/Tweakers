@@ -1,0 +1,658 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ *
+ * Author: Roland Smeenk
+ */
+
+
+#ifndef _TWEAKERS_H__
+#define _TWEAKERS_H__
+
+#include <string>
+#include <vector>
+#include <map>
+#include <sstream>
+#include "math.h"
+#include <osgViewer/Export>
+#include <osg/Referenced>
+#include <osg/Vec3>
+
+namespace osgViewer
+{
+
+/// An enabler interface provide an enabled state
+class  Enabler
+{
+protected:
+	/// Constructor
+	Enabler() {	}
+
+public:	
+	/// Return enabled state
+	virtual bool isEnabled() = 0;
+};
+
+/// The Tweakable interface is what the TweakerManipulator will talk against
+/// for selecting and updating a tweaker. A Tweakable provides it's value as string
+/// so the TweakerManipulator can render it.
+class  Tweakable  
+{
+protected:
+	/// Protected constructor
+	Tweakable() {}
+	
+	/// Protected destructor
+	virtual ~Tweakable() {}
+
+public:
+	/// Return false if not handled
+	virtual bool next() { return false; }
+	/// Return false if not handled
+	virtual bool previous() { return false; }
+	/// Increases the value
+	virtual void increase() = 0;
+	/// Decreases the value
+	virtual void decrease() = 0;
+	/// Returns the value converted to std::string
+	virtual std::string getValueAsString() = 0;
+	/// Return enabled state
+	virtual bool isEnabled() = 0;
+	/// See if the value has changed
+	virtual bool hasChanged(bool reset = true) = 0;
+};
+
+/// Templatized Tweaker base class that provides value storage and a changed flag
+/// and enabling based on an optional enabler
+template <typename T>
+class  Tweaker  :  public osg::Referenced, public Tweakable
+{
+protected:
+	/// Protected constructor
+	Tweaker(T& value, Enabler* enabler=NULL) :
+		_value(value),
+		_changed(false),
+		_enabler(enabler)
+	{
+	}
+		
+	/// Protected destructor
+	virtual ~Tweaker() {}
+	
+	/// Assignment operator
+	Tweaker & operator=( const Tweaker & ) { return *this; }	
+
+public:
+	/// Increases the value
+	virtual void increase() = 0;
+	/// Decreases the value
+	virtual void decrease() = 0;
+	/// Returns the value converted to std::string
+	virtual std::string getValueAsString() = 0;
+	/// Check update value for validity
+	virtual void updateValue(T val) 	
+	{
+		if (val != _value)
+		{
+			_value = val;
+			_changed = true;
+		}	
+	}
+	
+	/// Return enabled state
+	bool isEnabled() 
+	{
+		if (_enabler)
+			return _enabler->isEnabled();
+		return true;
+	}
+	
+	/// See if the value has changed
+	bool hasChanged(bool reset = true)
+	{	bool val = _changed;
+		if (reset)
+			_changed = false;
+		return val;
+	} 
+	
+	/// Reset changed flag
+	void resetChanged() 
+	{	_changed = false;	}
+	
+	T getValue() { return _value; }
+	void  setValue(T& val) { _value = val; }
+
+protected:
+	T& _value;					///< Current template type value
+	bool _changed;				///< Indicates change of the value
+	Enabler* _enabler;			///< Enabled state provider
+};
+
+
+/// Enabler that looks at current value of an certain Tweaker checks if equal or not equal
+/// This allows Tweakers to be visible of invisible based on the value of another Tweaker
+/// For instance if linear fog is set as fog mode, only the tweakers for the start and end value of the fog 
+/// need to be enabled. Fog density is only relevant for exponential fog.
+template <typename T>
+class  TweakerEnabler : public osg::Referenced, public Enabler
+{
+public:
+	/// Constructor
+	TweakerEnabler(Tweaker<T>* tweaker, T value, bool equals=true, Enabler* enabler=NULL)	:
+	   _tweaker(tweaker),
+	   _value(value),
+	   _equals(equals),
+	   _enabler(enabler)
+	{
+	}
+	
+	/// Return enabled state
+	virtual bool isEnabled() 
+	{
+		// If depending on another enabler check if it is enabled first
+		if (_enabler)
+			if (!_enabler->isEnabled())
+				return false;
+			
+		if (_tweaker)
+		{
+			if (!_tweaker->isEnabled())
+				return false;
+				
+			if (_equals)
+				return (_tweaker->getValue() == _value);
+			else
+				return (_tweaker->getValue() != _value);
+		}
+		return true;
+	}	
+	
+private:
+	Tweaker<T>* _tweaker; 
+	T _value;
+	bool _equals;
+	Enabler* _enabler;			///< Enabled state provider
+};
+
+
+/// Class for manipulating a numeric value by using a fixed step size and limited by range.
+template<typename T>
+class  NumericTweaker : public Tweaker<T>
+{
+public:
+	/// Constructor
+	NumericTweaker(T& value, T step, T min, T max, bool wrap=true, Enabler* enabler=NULL) :
+		Tweaker<T>(value, enabler),
+		_step(step),
+		_min(min),
+		_max(max),
+		_wrap(wrap)
+	{
+
+	}
+
+	void increase() 
+	{	
+		updateValue(_value + _step); 
+	}
+	
+	void decrease() 
+	{ 
+		updateValue(_value - _step); 
+	}
+
+	std::string getValueAsString() 
+	{
+		std::ostringstream os;
+		os << _value << " [" << _min << "," << _max << "]" ;
+		return os.str();
+	}
+
+private:
+	void updateValue(T val)
+	{
+		if (val > _max)
+		{
+			if (_wrap)
+				val = _min;
+			else
+				val = _max;
+		}
+
+		if (val < _min)
+		{
+			if (_wrap)
+				val = _max;
+			else
+				val = _min;
+		}
+		
+		if (val != _value)
+		{
+			_value = val;
+			_changed = true;
+		}
+	}
+
+	T _step;		///< Increase/decrease step size
+	bool _wrap;		///< Wrap on limits?
+	T _min;			///< Minimum value
+	T _max;			///< Maximum value
+};
+
+typedef NumericTweaker<double> DoubleTweaker;
+typedef NumericTweaker<float> FloatTweaker;
+typedef NumericTweaker<int> IntTweaker;
+
+
+/// Class for manipulating a numeric value array by using a fixed step size and limited by range.
+/// This Tweaker also handles the next and previous to step through the individual array components.
+template<typename T, unsigned int size = T::num_components>
+class  NumericArrayTweaker : public Tweaker<T>
+{
+public:
+	/// Constructor
+	NumericArrayTweaker(T& value, T step, T min, T max, bool wrap=false, Enabler* enabler=NULL) :
+		Tweaker<T>(value, enabler),
+		_step(step),
+		_min(min),
+		_max(max),
+		_wrap(wrap),
+		_currentComponent(0)
+	{
+
+	}
+	
+	bool next()
+	{
+		_currentComponent++;
+		if (_currentComponent == size)
+		{
+			_currentComponent = (size - 1);
+			return false;
+		}
+		return true;
+	}
+	
+	bool previous()
+	{
+		_currentComponent--;
+		if (_currentComponent == -1)
+		{
+			_currentComponent = 0;
+			return false;
+		}
+		return true;		
+	}
+
+	void increase() 
+	{	
+		_value[_currentComponent] += _step[_currentComponent];
+		updateValue(_value); 
+	}
+	
+	void decrease() 
+	{ 
+		_value[_currentComponent] -= _step[_currentComponent];
+		updateValue(_value); 
+	}
+
+	std::string getValueAsString() 
+	{
+		std::ostringstream os;
+		for (unsigned int i = 0; i < size; i++)
+		{
+			if (i > 0)
+				os << " ";
+				
+			if (i == _currentComponent)
+				os << "<" << _value[i] << ">";
+			else
+				os << _value[i];
+		}
+		
+		os << " [" << _min[_currentComponent] << "," << _max[_currentComponent] << "]" ;
+		return os.str();
+	}
+
+private:
+	void updateValue(T val)
+	{
+		if (val[_currentComponent] > _max[_currentComponent])
+		{
+			if (_wrap)
+				val[_currentComponent] = _min[_currentComponent];
+			else
+				val[_currentComponent] = _max[_currentComponent];
+		}
+
+		if (val[_currentComponent] < _min[_currentComponent])
+		{
+			if (_wrap)
+				val[_currentComponent] = _max[_currentComponent];
+			else
+				val[_currentComponent] = _min[_currentComponent];
+		}
+		
+		if (val != _value)
+		{
+			_value = val;
+			_changed = true;
+		}
+	}
+
+	T _step;							///< Increase/decrease step size
+	T _min;								///< Minimum value
+	T _max;								///< Maximum value
+	bool _wrap;							///< Wrap on limits?
+	unsigned int _currentComponent; 	///< Current component being updated
+};
+
+
+/// Class for manipulating an integer value by manipulating the exponent of a power
+/// function. Usefull for changing texture resolution.
+class  PowerTweaker : public Tweaker<int>
+{
+public:
+	/// Constructor
+	PowerTweaker(int& value, int base=2, int min=1, int max=8, bool wrap=false, Enabler* enabler=NULL) :
+		Tweaker<int>(value, enabler),
+		_base(base),
+		_min(min),
+		_max(max),
+		_wrap(wrap)
+	{
+		_exponent = (int)(log((float)value)/log((float)base));
+	}
+
+	void increase() 
+	{	
+		updateValue(_exponent + 1); 
+	}
+
+	void decrease() 
+	{ 
+		updateValue(_exponent - 1); 
+	}
+
+	std::string getValueAsString() 
+	{
+		std::ostringstream os;
+		os << _value << " [" << pow((float)_base, _min) << "," << pow((float)_base, _max) << "]" ;
+		return os.str();
+	}
+
+private:
+	void updateValue(int val)
+	{
+		if (val > _max)
+		{
+			if (_wrap)
+				val = _min;
+			else
+				val = _max;
+		}
+
+		if (val < _min)
+		{
+			if (_wrap)
+				val = _max;
+			else
+				val = _min;
+		}
+
+		if (val != _exponent)
+		{
+			_exponent = val;
+			_changed = true;
+			_value = pow((float)_base, _exponent);
+		}
+	}
+
+	int _base;		///< Current base
+	int _exponent;	///< Current exponent
+	int _min;		///< Minimum value
+	int _max;		///< Maximum value
+	bool _wrap;		///< Wrap on limits?
+};
+
+/// Lookup table of predefined values with a string representation for pretty printing
+template <typename T>
+class  LookupTweaker : public Tweaker<T> 
+{
+public:
+	typedef typename std::map<T, std::string>	LookupMap;
+	typedef typename LookupMap::iterator		LookupMapIterator;
+
+	/// Constructor that takes a map
+	LookupTweaker(const LookupMap& lookupMap, T& value, bool wrap=true, Enabler* enabler=NULL) :
+		Tweaker(value, enabler),
+		_wrap(wrap)
+	{
+		_lookupMap = lookupMap;
+		_currentValue = _lookupMap.find(value);
+		
+		if (_currentValue == _lookupMap.end())
+			_currentValue = _lookupMap.begin();
+	}	
+
+	void increase()
+	{
+		++_currentValue;
+		if (_currentValue == _lookupMap.end())
+		{
+			if (_wrap)
+			{
+				_currentValue = _lookupMap.begin();
+				_value = _currentValue->first;
+				_changed = true;
+			}
+			else
+			{
+				--_currentValue;
+			}
+		}
+		else
+		{
+			_value = _currentValue->first;
+			_changed = true;
+		}
+	}
+
+	void decrease() 
+	{
+		if (_currentValue == _lookupMap.begin())
+		{
+			if (_wrap)
+			{
+				_currentValue = _lookupMap.end();
+				--_currentValue;
+				_value = _currentValue->first;
+				_changed = true;
+			}
+		}
+		else
+		{
+			--_currentValue;
+			_value = _currentValue->first;
+			_changed = true;
+		}
+	}
+	
+	std::string getValueAsString() { return _currentValue->second; }
+
+private:
+
+		
+    LookupMap			_lookupMap;		///< Lookup of string value for template type key
+	LookupMapIterator	_currentValue;	///< Iterator pointing to current entry in map
+	bool				_wrap;			///< Wrap on limits?
+};
+
+/// Class for storing a boolean value
+class  BooleanTweaker : public Tweaker<bool> 
+{
+public:
+	/// Constructor
+	BooleanTweaker(bool& value, bool wrap=true, Enabler* enabler=NULL) :
+		Tweaker(value, enabler),
+		_wrap(wrap)
+	{
+	}
+
+	void increase() 
+	{	
+		updateValue(true); 
+	}
+	
+	void decrease() 
+	{ 
+		updateValue(false); 
+	}
+
+	std::string getValueAsString() 
+	{ 
+		if (_value) 
+			return std::string("true"); 
+		else 
+			return std::string("false"); 
+	}
+
+private:
+	void updateValue(bool val)
+	{
+		if (_wrap)
+		{
+			val = !_value;
+		}
+				
+		if (val != _value)
+		{
+			_value = val;
+			_changed = true;
+		}
+	}
+	
+	bool _wrap;		///< Wrap on limits?
+};
+
+/// Class for manipulating a direction vector with azimuth and elevation.
+/// Usefull for setting light direction or rotating a point around the center.
+class DirectionTweaker : public Tweaker<osg::Vec3>
+{
+public:
+	/// Constructor
+	DirectionTweaker(osg::Vec3& value, float azimuthStep, float elevationStep, Enabler* enabler=NULL) :
+		Tweaker<osg::Vec3>(value, enabler),
+		_azimuthActive(true),
+		_azimuthStep(azimuthStep),
+		_elevationStep(elevationStep)
+	{
+		value.normalize();
+		float elevationRad = asin(value[2]);
+		_elevation = osg::RadiansToDegrees(elevationRad);
+		_azimuth = osg::RadiansToDegrees( acos(value[1] / cos(elevationRad)));
+		calculateDirection();
+	}
+	
+	bool next()
+	{
+		if (_azimuthActive)
+		{
+			_azimuthActive = false;
+			return true;
+		}
+		return false;
+	}
+	
+	bool previous()
+	{
+		if (!_azimuthActive)
+		{
+			_azimuthActive = true;
+			return true;
+		}
+		return false;
+	}
+
+	void increase() 
+	{	
+		if (_azimuthActive)
+		{
+			_azimuth += _azimuthStep;
+			if (_azimuth >= 180)
+				_azimuth = -180;
+		}
+		else
+			_elevation = osg::clampBetween<float>(_elevation + _elevationStep, -90, 90);
+
+		calculateDirection();
+	}
+	
+	void decrease() 
+	{ 
+		if (_azimuthActive)
+		{
+			_azimuth -= _azimuthStep;
+			if (_azimuth <= -180)
+				_azimuth = 180;
+		}
+		else
+			_elevation = osg::clampBetween<float>(_elevation - _elevationStep, -90, 90);
+
+		calculateDirection();
+	}
+
+	std::string getValueAsString() 
+	{
+		std::ostringstream os;
+		
+		if (_azimuthActive)
+			os << "<" << _azimuth << "> " << _elevation;
+		else
+			os << _azimuth << " <" << _elevation << ">";
+			
+		os << " (" << _value[0] << " " << _value[1] << " " << _value[2] << ")";
+		
+		return os.str();
+	}
+
+private:
+	void calculateDirection()
+	{
+		osg::Vec3 dir;
+		float cosElev = cos(osg::DegreesToRadians(_elevation));
+		dir[0] = cosElev * sin(osg::DegreesToRadians(_azimuth));
+		dir[1] = cosElev * cos(osg::DegreesToRadians(_azimuth));
+		dir[2] = sin(osg::DegreesToRadians(_elevation));
+		updateValue(dir); 	
+	}
+	
+	void updateValue(osg::Vec3 val)
+	{
+		if (val != _value)
+		{
+			_value = val;
+			_changed = true;
+		}
+	}
+
+	bool _azimuthActive;	///< Azimuth active
+	float _elevation;		///< Current elevation
+	float _elevationStep;	///< Elevation increase/decrease step
+	float _azimuth;			///< Current azimuth
+	float _azimuthStep;		///< Azimuth increase/decrease step
+};
+
+
+}
+
+#endif // _TWEAKERS_H__

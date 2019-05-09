@@ -328,7 +328,7 @@ int main()
 
     //http://forum.openscenegraph.org/viewtopic.php?t=11947 -- Reference 
     //http://forum.openscenegraph.org/viewtopic.php?t=7996
-    osg::Uniform* arrayNeighbours = new osg::Uniform(osg::Uniform::Type::DOUBLE_VEC2, "Neigh_pos_2D", 8);
+    osg::Uniform* arrayNeighbours = new osg::Uniform(osg::Uniform::Type::DOUBLE_VEC2, "Neigh_pos_2D[0]", 8);
     for (unsigned c = 0; c < 8; c++)
     {
         arrayNeighbours->setElement(c, osg::Vec2d(static_cast<float>(cos(static_cast<double>(c)* M_PI / 4)), static_cast<float>(sin(static_cast<double>(c)* M_PI / 4))));

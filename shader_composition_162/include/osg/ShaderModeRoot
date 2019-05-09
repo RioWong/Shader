@@ -1,0 +1,208 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ *
+ * Author: Roland Smeenk
+*/
+
+#ifndef OSG_SHADERMODEROOT
+#define OSG_SHADERMODEROOT 1
+
+#include <osg/ShaderMode>
+
+namespace osg {
+
+/** 
+ * GLSL shader implementation of minimal OpenGL shader.
+ */
+class OSG_EXPORT ShaderModeVisualRoot : public ShaderMode
+{
+
+    public :
+        
+        ShaderModeVisualRoot();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeVisualRoot(const ShaderModeVisualRoot& shaderModeRoot,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			ShaderMode(shaderModeRoot,copyop)
+        {
+        }
+        
+        META_ShaderMode(osg, ShaderModeVisualRoot)   
+        
+        const static Type type = VISUALROOT;   
+        
+        virtual Type getType() const { return VISUALROOT; }      
+		
+        /** Add shader inputs to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+};
+
+/** 
+ * Shows EyeNormal encoded as RGB color
+ */
+class OSG_EXPORT ShaderModeEyeNormalRoot : public ShaderMode
+{
+
+    public :
+        
+        ShaderModeEyeNormalRoot();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeEyeNormalRoot(const ShaderModeEyeNormalRoot& shaderModeRoot,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			ShaderMode(shaderModeRoot,copyop)
+        {
+        }
+        
+        META_ShaderMode(osg, ShaderModeEyeNormalRoot)   
+        
+        const static Type type = EYENORMALROOT;   
+        
+        virtual Type getType() const { return EYENORMALROOT; }      
+		
+        /** Add shader inputs to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+};
+
+/** 
+ * Shows viewDistance encoded as grayscale. (black = 0, white = 100)
+ */
+class OSG_EXPORT ShaderModeDepthRoot : public ShaderMode
+{
+
+    public :
+        
+        ShaderModeDepthRoot();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeDepthRoot(const ShaderModeDepthRoot& shaderModeRoot,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			ShaderMode(shaderModeRoot,copyop)
+        {
+        }
+        
+        META_ShaderMode(osg, ShaderModeDepthRoot)   
+        
+        const static Type type = DEPTHROOT;   
+        
+        virtual Type getType() const { return DEPTHROOT; }      
+		
+        /** Add shader inputs to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+};
+
+/** 
+ * GLSL shader implementation that converts incoming vertex normal and eye position to often used values
+ */
+class OSG_EXPORT ShaderModeBase : public ShaderMode
+{
+    public :
+        
+        ShaderModeBase();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeBase(const ShaderModeBase& shaderModeRoot,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			ShaderMode(shaderModeRoot,copyop)
+        {
+        }
+        
+        META_ShaderMode(osg, ShaderModeBase)   
+        
+        virtual Type getType() const { return BASE; } 
+        
+        /** Add shader inputs to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+};
+
+
+/** 
+ * GLSL shader implementation of texture matrix
+ */
+class OSG_EXPORT ShaderModeTexMat : public ShaderMode
+{
+    public :
+        
+        ShaderModeTexMat();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeTexMat(const ShaderModeTexMat& shaderModeRoot,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			ShaderMode(shaderModeRoot,copyop)
+        {
+        }
+        
+        META_ShaderMode(osg, ShaderModeTexMat)   
+        
+        const static Type type = TEXMAT;
+        
+        virtual Type getType() const { return TEXMAT; } 
+        
+        /** Add shader inputs to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+};
+
+
+/** 
+ * GLSL shader implementation of color matrix
+ */
+class OSG_EXPORT ShaderModeColorMatrix : public ShaderMode
+{
+    public :
+        
+        ShaderModeColorMatrix();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeColorMatrix(const ShaderModeColorMatrix& shaderModeRoot,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			ShaderMode(shaderModeRoot,copyop)
+        {
+        }
+        
+        META_ShaderMode(osg, ShaderModeColorMatrix)   
+        
+        const static Type type = COLORMATRIX;
+        
+        virtual Type getType() const { return COLORMATRIX; } 
+        
+        /** Add shader inputs to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+};
+
+/** 
+ * GLSL shader implementation of clip plane
+ */
+class OSG_EXPORT ShaderModeClipPlane : public MultiShaderMode
+{
+    public :
+        
+        ShaderModeClipPlane(int clipPlaneNum=0);
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeClipPlane(const ShaderModeClipPlane& shaderModeRoot,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			MultiShaderMode(shaderModeRoot,copyop)
+        {
+        }
+        
+        META_ShaderMode(osg, ShaderModeClipPlane)   
+        
+        const static Type type = CLIPPLANE;
+        
+        virtual Type getType() const { return CLIPPLANE; }
+        
+        /** Add shader inputs to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+        
+        virtual void resetTraversed() { _traversed = false; _typeTraversed = false; }
+		
+	protected:
+		static bool _typeTraversed;        
+};
+
+}
+
+#endif

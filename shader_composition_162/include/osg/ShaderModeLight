@@ -1,0 +1,57 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ *
+ * Author: Roland Smeenk
+*/
+
+#ifndef OSG_SHADERMODELIGHT
+#define OSG_SHADERMODELIGHT 1
+
+#include <osg/ShaderMode>
+
+namespace osg {
+
+/** 
+ * GLSL shader implementation of OpenGL light functionality.
+ */
+class OSG_EXPORT ShaderModeLight : public MultiShaderMode
+{
+
+    public :
+
+		/// Custom constructor        
+        ShaderModeLight(int lightNum=0);
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeLight(const ShaderModeLight& shaderModeLight,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			MultiShaderMode(shaderModeLight,copyop)
+        {
+	    }
+        
+        META_ShaderMode(osg, ShaderModeLight)     
+        
+        const static Type type = LIGHT;  
+        
+		virtual Type getType() const { return LIGHT; }         
+		
+        /** Add shader inputs to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+        
+        virtual void resetTraversed() { _traversed = false; _typeTraversed = false; }
+		
+	protected:
+		static bool _typeTraversed;
+};
+
+}
+
+#endif

@@ -1,0 +1,99 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ * 
+ * Author: Roland Smeenk
+ */
+ 
+#ifndef OSG_SHADERGENERATOR
+#define OSG_SHADERGENERATOR 1
+
+#include <list>
+#include <osg/Export>
+#include <osg/GL>
+#include <osg/State>
+#include <osg/ShaderMode>
+#include <string>
+#include <sstream>
+
+namespace osg {
+
+class SourceOutput;
+
+struct SortFunctor
+{
+    bool operator() (const osg::ref_ptr<ShaderMode>& lhs, const osg::ref_ptr<ShaderMode>& rhs)
+    {
+		return (*(lhs.get()) < *(rhs.get()));
+    }
+};
+
+class OSG_EXPORT ShaderGenerator
+{
+public:
+    ShaderGenerator();
+    ~ShaderGenerator() {}
+    
+    void removeAllShaderModes();
+    void addShaderMode(osg::ref_ptr<ShaderMode> shaderMode);
+        
+    osg::Program* getOrCreateProgram();
+    
+    /** return the list of all Uniforms contained in this ShaderGenerator.*/
+    inline StateAttribute::UniformList& getUniformList() { return _uniformList; }
+
+    /** return the const list of all Uniforms contained in this const ShaderGenerator.*/
+    inline const StateAttribute::UniformList& getUniformList() const { return _uniformList; }    
+
+private:
+	class ShaderModeList : public std::set<osg::ref_ptr<ShaderMode>, SortFunctor >
+	{
+	public:
+		ShaderModeList() {}
+		~ShaderModeList() {}
+
+        /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+        int compare(const ShaderModeList& rhs) const;
+
+		bool operator <	 (const ShaderModeList& rhs) const { return compare(rhs)<0; }
+		bool operator == (const ShaderModeList& rhs) const { return compare(rhs)==0; }
+ 		bool operator != (const ShaderModeList& rhs) const { return compare(rhs)!=0; }
+	};
+
+	void writeShaderModeGraph(SourceOutput& str);
+	void writeShaderPart(SourceOutput& str, ShaderMode::SourceInjectLocation location, unsigned int index=0);
+
+	typedef std::map<ShaderModeList, osg::ref_ptr<Program> > ShaderModeListProgramMap;
+
+	/// The program that will be generated at runtime from ShaderModes
+	ref_ptr<Program>	_compositedProgram;
+	/// Simple purple shader program that indicates that there was not a valid shadermode root
+	ref_ptr<Program>	_noRootProgram;
+	
+	/// The list of uniforms for controlling the generated programs
+	StateAttribute::UniformList			_uniformList;
+	
+	ShaderModeList _shaderModes;
+	
+	/// List of non-switchable utility shader modes that can provide custom outputs 
+	/// and are added to the scene graph upon request
+	ShaderModeList _utilShaderModes;
+	
+	/// Cache of created shader programs
+	ShaderModeListProgramMap _programCache;
+	
+	/// Multiple shaderMode root
+	ShaderModeList _rootModes;
+};
+
+} // namespace osg
+
+#endif

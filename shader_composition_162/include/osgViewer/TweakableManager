@@ -1,0 +1,99 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ * 
+ * Author: Roland Smeenk
+ */
+
+#ifndef OSGVIEWER_TWEAKABLE_MANAGER
+#define OSGVIEWER_TWEAKABLE_MANAGER 1
+
+#include <osgGA/Export>
+#include <osgGA/GUIEventAdapter>
+#include <osgGA/GUIActionAdapter>
+#include <osgGA/GUIEventHandler>
+
+#include <osgText/Text>
+#include <osgViewer/Viewer>
+#include <osgViewer/Tweakers>
+
+
+namespace osgViewer {
+
+/**
+ * Eventhandler that maintains a list of Tweakables that can update values based on keyboard event.
+ * Press '/' to show the Tweakable HUD. Walk through all available Tweakables with left or right arrow.
+ * Update the Tweakable with the up or down arrow.
+ */ 
+class OSGVIEWER_EXPORT TweakableManager : public osgGA::GUIEventHandler
+{
+public:
+
+    TweakableManager();
+
+    virtual const char* className() const { return "TweakableManager"; }
+
+    /** Handle events, return true if handled, false otherwise.*/
+    virtual bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& us);        
+    
+    osg::Camera* getCamera() { return _camera.get(); }
+    const osg::Camera* getCamera() const { return _camera.get(); }
+
+    /** Get the keyboard and mouse usage of this manipulator.*/
+    virtual void getUsage(osg::ApplicationUsage& usage) const;
+
+protected:
+
+    virtual ~TweakableManager();
+
+	/// Select next tweakable to be the active one
+	void next();
+	/// Select the previous tweakable to be the active one
+	void previous();
+	/// Increase the current tweakable
+	void increase();
+	/// Decrease the current tweakable
+	void decrease();
+	/// Update the displayed text
+	void update(); 
+
+public:
+	void addTweakable(const std::string& name, Tweakable* tweakable);
+
+protected:
+	typedef struct 
+	{
+		std::string name;
+		Tweakable* tweakable;
+	} TweakableEntry;
+	
+	/// Vector of Tweakable names and their tweakables
+	typedef std::vector<TweakableEntry>  TweakableVector;
+	
+	/// List of tweakables
+    TweakableVector _tweakableVector;
+	
+	/// Currently active tweakable
+	int _currentTweakable;
+	
+	void setUpHUDCamera(osgViewer::ViewerBase* viewer);
+	void setUpScene();
+
+	bool                                _helpEnabled;
+	bool                                _initialized;
+	osg::ref_ptr<osg::Camera>           _camera;
+	osg::ref_ptr<osg::Switch>           _switch;
+	osg::ref_ptr<osgText::Text>			_label;
+};
+
+}
+
+#endif // OSGVIEWER_TWEAKABLE_MANAGER

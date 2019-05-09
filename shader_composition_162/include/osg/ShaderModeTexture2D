@@ -1,0 +1,57 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ *
+ * Author: Roland Smeenk  
+*/
+
+#ifndef OSG_SHADERMODETEXTURE2D
+#define OSG_SHADERMODETEXTURE2D 1
+
+#include <osg/ShaderMode>
+
+// TODO texenv and texenvcombine should be recreated using uniforms
+// in the ffp the did not depend on a mode, but their shader counterparts may depend on a shadermode. 
+// This could also be solved by letting environment be part of texture2d, but this would require a function call 
+// huge addition for each sampler.
+
+namespace osg {
+
+/** 
+ * GLSL shader implementation of OpenGL 2D texture functionality.
+ */
+class OSG_EXPORT ShaderModeTexture2D : public MultiShaderMode
+{
+
+    public :
+
+        /// Custom constructor
+        ShaderModeTexture2D(int stage=0);
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        ShaderModeTexture2D(const ShaderModeTexture2D& shaderModeTexture2D,const CopyOp& copyop=CopyOp::SHALLOW_COPY) :
+			MultiShaderMode(shaderModeTexture2D,copyop)
+        {
+        }
+        
+        META_ShaderMode(osg, ShaderModeTexture2D)  
+        
+        const static Type type = TEXTURE2D;  
+        
+        virtual Type getType() const { return TEXTURE2D; }    
+		
+        /** Add shader code fragments to given stream **/
+        void writeSourceImplementation(SourceOutput& str, SourceInjectLocation location, unsigned int index=0);
+};
+
+}
+
+#endif
