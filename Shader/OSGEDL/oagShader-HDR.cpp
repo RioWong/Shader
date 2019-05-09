@@ -322,7 +322,7 @@ public:
 int main()
 {
     osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
-    osg::Node* ceep = osgDB::readNodeFile("ceep.ive");
+    osg::Node* ceep = osgDB::readNodeFile("../ceep.ive");
 
     //--------------------------------------------------------------------------
     //Õ®µ¿“ª
@@ -372,10 +372,10 @@ int main()
 
 
     osg::Group* quadFirst = new osg::Group;
-    osg::Node* screenquad = osgDB::readNodeFile("ScreenAlignedQuad.3ds");
+    osg::Node* screenquad = osgDB::readNodeFile("../ScreenAlignedQuad.3ds");
     if (!screenquad)
     {
-        std::cout << "ERRIR" << std::endl;
+        std::cout << "ERROR" << std::endl;
     }
     quadFirst->addChild(screenquad);
     osg::StateSet* stateset = quadFirst->getOrCreateStateSet();

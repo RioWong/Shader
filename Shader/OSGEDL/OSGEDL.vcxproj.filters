@@ -24,5 +24,8 @@
     <ClCompile Include="oagShader-HDR.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="osgShader-Woods.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
