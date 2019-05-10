@@ -79,6 +79,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="oagShader-Brick.cpp" />
     <ClCompile Include="oagShader-HDR.cpp" />
     <ClCompile Include="osgShader-Bump.cpp" />
     <ClCompile Include="osgShader-EDL.cpp" />
