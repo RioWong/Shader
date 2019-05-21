@@ -1,6 +1,8 @@
 #include "../Common/Common.h"
 #include <osgViewer/Viewer>
 #include <osgDB/ReadFile>
+#include <osg/Image>
+#include <osgDB/WriteFile>
 #include <osg/Texture2D>
 #include <osg/StateSet>
 #include <osg/Camera>
@@ -11,6 +13,7 @@
 #include <osg/LightSource>
 #include <osg/BoundingBox>
 #include <osg/BoundingSphere>
+
 
 #define M_PI 3.14159265358979323846  /* pi */
 
@@ -307,26 +310,28 @@ public:
 int main()
 {
     osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
+    osg::ref_ptr<osg::Group> root = new osg::Group;
     osg::Node* ceep = osgDB::readNodeFile("cow.osg" /*"../ceep.ive"*/);//"../ceep.ive""cow.osg"
+    root->addChild(ceep);
     //--------------------------------------------------------------------------
     //通道一 -- RGBA 256*256
     osg::Group* passFirst = new osg::Group;
     //RTT
     osg::Texture2D* textureFirst1 = new osg::Texture2D;
-    textureFirst1->setTextureSize(256, 256);//32, 32
+    textureFirst1->setTextureSize(150, 150);
     textureFirst1->setInternalFormat(GL_RGBA);
     textureFirst1->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
     textureFirst1->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-    textureFirst1->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    textureFirst1->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    textureFirst1->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    textureFirst1->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    textureFirst1->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
+    textureFirst1->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
 
     cameraFirst->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
     cameraFirst->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     cameraFirst->setProjectionMatrixAsPerspective(60.0, 1.0, 0.1, 1000.0);
     cameraFirst->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     cameraFirst->setViewMatrixAsLookAt(osg::Vec3(0.0, -245.0, 0.0), osg::Vec3(0.0, -144.72, 0.0), osg::Vec3(0.0, 0.0, 1.0));
-    cameraFirst->setViewport(0, 0, 256, 256);//0, 0, 32, 32
+    cameraFirst->setViewport(0, 0, 150, 150);//0, 0, 32, 32
     osg::Camera::RenderTargetImplementation rm = osg::Camera::FRAME_BUFFER_OBJECT;
     cameraFirst->setRenderTargetImplementation(rm);
     cameraFirst->attach(osg::Camera::COLOR_BUFFER, textureFirst1);
@@ -337,13 +342,13 @@ int main()
     osg::Group* passSecond = new osg::Group;
     //RTT
     osg::Texture2D* textureFirst2 = new osg::Texture2D;
-    textureFirst2->setTextureSize(512, 512);//32, 32
+    textureFirst2->setTextureSize(300, 300);
     textureFirst2->setInternalFormat(GL_RGBA);
     textureFirst2->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
     textureFirst2->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-    textureFirst2->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    textureFirst2->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    textureFirst2->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    textureFirst2->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    textureFirst2->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
+    textureFirst2->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
 
     osg::Camera* cameraSecond = new osg::Camera;
     cameraSecond->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
@@ -351,7 +356,7 @@ int main()
     cameraSecond->setProjectionMatrixAsPerspective(60.0, 1.0, 0.1, 1000.0);
     cameraSecond->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     cameraSecond->setViewMatrixAsLookAt(osg::Vec3(0.0, -245.0, 0.0), osg::Vec3(0.0, -144.72, 0.0), osg::Vec3(0.0, 0.0, 1.0));
-    cameraSecond->setViewport(0, 0, 512, 512);//0, 0, 32, 32
+    cameraSecond->setViewport(0, 0, 300, 300);//0, 0, 32, 32
     cameraSecond->setRenderTargetImplementation(rm);
     cameraSecond->attach(osg::Camera::COLOR_BUFFER, textureFirst2);
     cameraSecond->addChild(passFirst/*ceep*/);
@@ -361,13 +366,13 @@ int main()
     osg::Group* passThird = new osg::Group;
     //RTT
     osg::Texture2D* textureFirst3 = new osg::Texture2D;
-    textureFirst3->setTextureSize(1024, 1024);//32, 32
+    textureFirst3->setTextureSize(600, 600);
     textureFirst3->setInternalFormat(GL_RGBA);
     textureFirst3->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
     textureFirst3->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-    textureFirst3->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    textureFirst3->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    textureFirst3->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    textureFirst3->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    textureFirst3->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
+    textureFirst3->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
 
     osg::Camera* cameraThird = new osg::Camera;
     cameraThird->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
@@ -375,53 +380,57 @@ int main()
     cameraThird->setProjectionMatrixAsPerspective(60.0, 1.0, 0.1, 1000.0);
     cameraThird->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     cameraThird->setViewMatrixAsLookAt(osg::Vec3(0.0, -245.0, 0.0), osg::Vec3(0.0, -144.72, 0.0), osg::Vec3(0.0, 0.0, 1.0));
-    cameraThird->setViewport(0, 0, 1024, 1024);//0, 0, 32, 32
+    cameraThird->setViewport(0, 0, 600, 600);//0, 0, 32, 32
     cameraThird->setRenderTargetImplementation(rm);
     cameraThird->attach(osg::Camera::COLOR_BUFFER, textureFirst3);
     cameraThird->addChild(passSecond/*ceep*/);
     passThird->addChild(cameraThird);
 
+
     //通道四 -- 深度FBO 1024*1024
     osg::Group* passForth = new osg::Group;
     //再RTT
     osg::Texture2D* textureFirst4 = new osg::Texture2D;
-    textureFirst4->setTextureSize(1024, 1024);//512, 512
-    textureFirst4->setInternalFormat(GL_DEPTH_COMPONENT/*GL_RGBA*/);
+    textureFirst4->setTextureSize(600, 600);//512, 512
+    textureFirst4->setInternalFormat(GL_DEPTH_COMPONENT);
+    //-------------------------------------------------------------------------
+    //获取深度缓存 参考http://forum.openscenegraph.org/viewtopic.php?t=10697
+    //textureFirst4->setInternalFormat(GL_DEPTH_COMPONENT32);
+    //textureFirst4->setSourceType(GL_UNSIGNED_INT);
+    //-------------------------------------------------------------------------
     textureFirst4->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
     textureFirst4->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
     textureFirst4->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT/*CLAMP_TO_EDGE*/);
-    textureFirst4->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    textureFirst4->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    textureFirst4->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
+    textureFirst4->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
 
     cameraFirst2->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
     cameraFirst2->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     cameraFirst2->setProjectionMatrixAsPerspective(60.0, 1.0, 0.1, 1000.0);
     cameraFirst2->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     cameraFirst2->setViewMatrixAsLookAt(osg::Vec3(0.0, -245.0, 0.0), osg::Vec3(0.0, -144.72, 0.0), osg::Vec3(0.0, 0.0, 1.0));
-    cameraFirst2->setViewport(0, 0, 1024, 1024);//0, 0, 512, 512
+    cameraFirst2->setViewport(0, 0, 600, 600);//0, 0, 512, 512
     cameraFirst2->setRenderTargetImplementation(rm);
     cameraFirst2->attach(osg::Camera::DEPTH_BUFFER, textureFirst4);
-    //cameraFirst2->attach(osg::Camera::DEPTH_BUFFER, textureFirst2, 0, 0, false, 4, 0);
+    //cameraFirst2->attach(osg::Camera::DEPTH_BUFFER, textureFirst4, 0, 0, false, 4, 0);
     cameraFirst2->addChild(ceep);
     passForth->addChild(cameraFirst2);
-    passForth->addChild(passThird);//将深度相机和RGBA多通道合成
+    //passForth->addChild(passThird);//将深度相机和RGBA多通道合成
 
-    osg::Group* quadFirst = new osg::Group;
-    osg::ref_ptr<osg::Node> screenquad = osgDB::readNodeFile("cow.osg");//"../ScreenAlignedQuad.3ds"
-    //screenquad->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
-    //screenquad->getOrCreateStateSet()->setMode(GL_RESCALE_NORMAL, osg::StateAttribute::ON);
 
-    //osg::Node* screenquad = osgDB::readNodeFile("cow.osg");//"../ScreenAlignedQuad.3ds"
-    if (!screenquad)
-    {
-        std::cout << "ERROR" << std::endl;
-    }
-    quadFirst->addChild(screenquad);
-    osg::StateSet* stateset = /*quadFirst*/screenquad->getOrCreateStateSet();
-    stateset->setTextureAttributeAndModes(0, textureFirst1, osg::StateAttribute::ON); //纹理1 - COLOR_BUFFER
-    stateset->setTextureAttributeAndModes(1, textureFirst2, osg::StateAttribute::ON); //纹理2 - DEPTH_BUFFER
+    //osg::Group* quadFirst = new osg::Group;
+    //osg::ref_ptr<osg::Node> screenquad = osgDB::readNodeFile("../ScreenAlignedQuad.3ds");//"cow.osg"
+    //if (!screenquad)
+    //{
+    //    std::cout << "ERROR" << std::endl;
+    //}
+    //quadFirst->addChild(screenquad);
+    //root->addChild(quadFirst);
+    osg::StateSet* stateset = ceep->getOrCreateStateSet();
+    stateset->setTextureAttributeAndModes(0, textureFirst3, osg::StateAttribute::ON); //纹理1 - COLOR_BUFFER
+    stateset->setTextureAttributeAndModes(1, textureFirst4, osg::StateAttribute::ON); //纹理2 - DEPTH_BUFFER
     //OSG光照使用及模型发暗解决方法 https://blog.csdn.net/qq_38378235/article/details/81058138
-    stateset->setMode(GL_RESCALE_NORMAL, osg::StateAttribute::OFF);
+    //stateset->setMode(GL_RESCALE_NORMAL, osg::StateAttribute::OFF);
 
     osg::Program* programFirst = new osg::Program;
     programFirst->addShader(new osg::Shader(osg::Shader::VERTEX, edlshaderVert));//第一个shader
@@ -439,8 +448,8 @@ int main()
     stateset->addUniform(new osg::Uniform("Exp_scale", 1.2/*m_expScale*/));
     stateset->addUniform(new osg::Uniform("Zm", 0.10/*static_cast<float>(parameters.zNear)*/));
     stateset->addUniform(new osg::Uniform("ZM", 1000.0/*static_cast<float>(parameters.zFar)*/));
-    stateset->addUniform(new osg::Uniform("Sx", 1024/*static_cast<float>(m_screenWidth)*/));
-    stateset->addUniform(new osg::Uniform("Sy", 1024/*static_cast<float>(m_screenHeight)*/));
+    stateset->addUniform(new osg::Uniform("Sx", 600/*static_cast<float>(m_screenWidth)*/));
+    stateset->addUniform(new osg::Uniform("Sy", 600/*static_cast<float>(m_screenHeight)*/));
     stateset->addUniform(new osg::Uniform("Zoom", 3.0/*lightMod*/));
     stateset->addUniform(new osg::Uniform("PerspectiveMode", 1/*perspectiveMode*/));
     osg::Vec3 lightDir = setLightDir(static_cast<float>(M_PI / 2.0), static_cast<float>(M_PI / 2.0));
@@ -455,123 +464,16 @@ int main()
         arrayNeighbours->setElement(c, osg::Vec2(static_cast<float>(cos(static_cast<double>(c)* M_PI / 4)), static_cast<float>(sin(static_cast<double>(c)* M_PI / 4))));
     }
     stateset->addUniform(arrayNeighbours);
-
-    passForth->addChild(quadFirst);
-    //passFirst->addChild(createLight(/*quadFirst*/screenquad.get()));
-
     //---------------------------------------------------------------------------
-    ////通道二
-    //osg::Group* secondPass = new osg::Group;
-    ////RTT
-    //osg::Texture2D* texturesecond = new osg::Texture2D;
-    //texturesecond->setTextureSize(128, 128);
-    //texturesecond->setInternalFormat(GL_RGBA);
-    //texturesecond->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
-    //texturesecond->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-    //texturesecond->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    //texturesecond->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    //texturesecond->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
-
-    //osg::Camera* camerasecond = new osg::Camera;
-    //camerasecond->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
-    //camerasecond->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //camerasecond->setViewport(0, 0, 128, 128);
-    //camerasecond->setRenderTargetImplementation(rm);
-    //camerasecond->attach(osg::Camera::COLOR_BUFFER, texturesecond);
-    //camerasecond->addChild(passFirst);
-    //secondPass->addChild(camerasecond);
-
-    //osg::Group* quadsecond = new osg::Group;
-    //quadsecond->addChild(screenquad);
-    //stateset = quadsecond->getOrCreateStateSet();
-    //stateset->setTextureAttributeAndModes(3, texturesecond, osg::StateAttribute::ON);
-
-    //osg::Program* programsecond = new osg::Program;
-    //programsecond->addShader(new osg::Shader(osg::Shader::VERTEX, edlmixVert));//第一个shader
-    //programsecond->addShader(new osg::Shader(osg::Shader::FRAGMENT, edlmixFrag));
-    //stateset->setAttributeAndModes(programsecond, osg::StateAttribute::ON);
-
-    //stateset->addUniform(new osg::Uniform("RT", 3));
-    //stateset->addUniform(new osg::Uniform("sampleDist0", 0.0198f));
-    //secondPass->addChild(quadsecond);
-    
-    //---------------------------------------------------------------------------
-    ////通道三
-    //osg::Group* thirdPass = new osg::Group;
-    ////RTT
-    //osg::Texture2D* textureThird = new osg::Texture2D;
-    //textureThird->setTextureSize(128, 128);
-    //textureThird->setInternalFormat(GL_RGBA);
-    //textureThird->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
-    //textureThird->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-    //textureThird->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    //textureThird->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    //textureThird->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
-
-    //osg::Camera* cameraThird = new osg::Camera;
-    //cameraThird->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
-    //cameraThird->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //cameraThird->setViewport(0, 0, 128, 128);
-    //cameraThird->setRenderTargetImplementation(rm);
-    //cameraThird->attach(osg::Camera::COLOR_BUFFER, textureThird);
-    //cameraThird->addChild(secondPass);
-    //thirdPass->addChild(cameraThird);
-
-    //osg::Group* quadthird = new osg::Group;
-    //quadthird->addChild(screenquad);
-    //stateset = quadthird->getOrCreateStateSet();
-    //stateset->setTextureAttributeAndModes(4, textureThird, osg::StateAttribute::ON);
-
-    //osg::Program* programThird = new osg::Program;
-    //programThird->addShader(new osg::Shader(osg::Shader::VERTEX, vertShaderThird));
-    //programThird->addShader(new osg::Shader(osg::Shader::FRAGMENT, fragShaderThird));
-    //stateset->setAttributeAndModes(programThird, osg::StateAttribute::ON);
-
-    //stateset->addUniform(new osg::Uniform("RT1", 4));
-    //stateset->addUniform(new osg::Uniform("sampleDist1", 0.0192f));
-    //thirdPass->addChild(quadthird);
-    ////-----------------------------------------------------------------
-
-    ////通道四
-    //osg::Group* forthPass = new osg::Group;
-    ////RTT
-    //osg::Texture2D* textureForth = new osg::Texture2D;
-    //textureForth->setTextureSize(512, 512);
-    //textureForth->setInternalFormat(GL_RGBA);
-    //textureForth->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
-    //textureForth->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-    //textureForth->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    //textureForth->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    //textureForth->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
-
-    //osg::Camera* cameraForth = new osg::Camera;
-    //cameraForth->setClearColor(osg::Vec4(0.0, 0.0, 0.0, 1.0f));
-    //cameraForth->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //cameraForth->setViewport(0, 0, 512, 512);
-    //cameraForth->setRenderTargetImplementation(rm);
-    //cameraForth->attach(osg::Camera::COLOR_BUFFER, textureForth);
-    //cameraForth->addChild(thirdPass);
-    //forthPass->addChild(cameraForth);
-
-    //osg::Group* quadForth = new osg::Group;
-    //quadForth->addChild(screenquad);
-    //stateset = quadForth->getOrCreateStateSet();
-    //stateset->setTextureAttributeAndModes(5, textureFirst2, osg::StateAttribute::ON);
-    //stateset->setTextureAttributeAndModes(6, textureForth, osg::StateAttribute::ON);
-
-    //osg::Program* programForth = new osg::Program;
-    //programForth->addShader(new osg::Shader(osg::Shader::VERTEX, vertShaderForth));
-    //programForth->addShader(new osg::Shader(osg::Shader::FRAGMENT, fragShaderForth));
-    //stateset->setAttributeAndModes(programForth, osg::StateAttribute::ON);
-
-    //stateset->addUniform(new osg::Uniform("tex0", 5));
-    //stateset->addUniform(new osg::Uniform("tex1", 6));
-    //forthPass->addChild(quadForth);
-
-
-viewer->setSceneData(/*quadFirst*//*passFirst*/ passForth);
+    viewer->setSceneData(/*passForth*/ root);
     //viewer->addEventHandler(new CameraEvent);
     viewer->addEventHandler(new ChangeWindow);
+    osg::ref_ptr<osg::Image> image = new osg::Image;
+    image->readPixels(0, 0, 600, 600, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE);
+    if (osgDB::writeImageFile(*image, "ColorBuffer.bmp"))
+    {
+        std::cout << "Saved screen image to `" << "ColorBuffer.bmp" << "`" << std::endl;
+    }
     viewer->run();
     return 0;
 }
